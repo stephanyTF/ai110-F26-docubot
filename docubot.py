@@ -116,9 +116,21 @@ class DocuBot:
 
         Return a list of (filename, text) sorted by score descending.
         """
-        results = []
-        # TODO: implement retrieval logic
-        return results[:top_k]
+        scored_lst = []
+
+        #l. Loop through self.documents &  Score each file using score_document()
+        for filename, text in self.documents:      # one (filename, text) pair per file
+            score = self.score_document(query, text)
+            #2. Append the score to the filename in a dict
+            if score > 0:
+                scored_lst.append((score,filename,text))
+        #3. Sort the list of tuples by the descending score
+        scored_lst.sort(key=lambda item: item[0], reverse=True)
+        #4. Use top_k to find the first k number of files and append that file and text as a tuple into the results list
+        results = [(filename, text) for _, filename, text in scored_lst[:top_k]]
+
+
+        return results
 
     # -----------------------------------------------------------
     # Answering Modes
