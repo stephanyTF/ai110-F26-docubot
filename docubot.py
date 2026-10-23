@@ -23,8 +23,11 @@ class DocuBot:
         # Load documents into memory
         self.documents = self.load_documents()  # List of (filename, text)
 
-        # Build a retrieval index (implemented in Phase 1)
-        self.index = self.build_index(self.documents)
+        # Split documents into sections: List of (filename, section_text)
+        self.sections = self.split_all_sections(self.documents)
+
+        # Build a retrieval index over sections (implemented in Phase 1)
+        self.index = self.build_index(self.sections)
 
     # -----------------------------------------------------------
     # Document Loading
@@ -46,38 +49,61 @@ class DocuBot:
         return docs
 
     # -----------------------------------------------------------
+    # Section Splitting
+    # -----------------------------------------------------------
+
+    def split_sections(self, filename, text)-> :
+        """
+        Splits one document into sections.
+        Markdown files split before each heading; any section without
+        headings (e.g. .txt files) falls back to blank-line paragraphs.
+        Returns a list of (filename, section_text).
+        """
+        parts = re.split(r"(?m)^(?=#{1,3} )", text)
+        sections = []
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            if part.startswith("#"):
+                sections.append((filename, part))
+            else:
+                # No heading: split into paragraphs
+                for para in re.split(r"\n\s*\n", part):
+                    if para.strip():
+                        sections.append((filename, para.strip()))
+        return sections
+
+    def split_all_sections(self, documents):
+        """Splits every document into sections."""
+        sections = []
+        for filename, text in documents:
+            sections.extend(self.split_sections(filename, text))
+        return sections
+
+    # -----------------------------------------------------------
     # Index Construction (Phase 1)
     # -----------------------------------------------------------
 
-    def build_index(self, documents):
+    def build_index(self, sections):
         """
-        TODO (Phase 1):
-        Build a tiny inverted index mapping lowercase words to the documents
+        Build a tiny inverted index mapping lowercase words to the sections
         they appear in.
 
         Example structure:
         {
-            "token": ["AUTH.md", "API_REFERENCE.md"],
-            "database": ["DATABASE.md"]
+            "token": {0, 5},      # indexes into self.sections
+            "database": {12}
         }
-
-        Keep this simple: split on whitespace, lowercase tokens,
-        ignore punctuation if needed.
         """
         index = {}
-        #1. Loop through each document in documents
-        for filename, text in documents:
-            #2. Split the text into words (tokens) and ignore punctuation
-            tokens = [t.strip(".,;:!?()[]{}\"'`*#") for t in text.lower().split()]
-            tokens = re.findall(f"\w+", text.lower())  # Use regex to extract words only
-
-            #3. Loop through each token
+        for section_id, (filename, text) in enumerate(sections):
+            tokens = re.findall(r"\w+", text.lower())  # words only, no punctuation
             for token in tokens:
-                #4. Add the filename to the index for this token
                 if token not in index:
                     index[token] = set()  # Use a set to avoid duplicates
-                index[token].add(filename)
-        
+                index[token].add(section_id)
+
         return index
 
     # -----------------------------------------------------------
@@ -95,7 +121,7 @@ class DocuBot:
         - Return the count as the score
         """
         #include stop words list to skip insignficant query words
-        stop_words_lst = ["how", "does", "do","the", "a", "which", "where", 'i']
+        stop_words_lst = ["is", "the", "and", "can", "at", "an", "what", "how", "does", "do","the", "a", "which", "where", 'i']
        
        #1. Create a count var 
         count = 0
@@ -118,11 +144,16 @@ class DocuBot:
         """
         scored_lst = []
 
-        #l. Loop through self.documents &  Score each file using score_document()
-        for filename, text in self.documents:      # one (filename, text) pair per file
+        #1. Use the index to find candidate sections containing any query word
+        candidate_ids = set()
+        for word in re.findall(r"\w+", query.lower()):
+            candidate_ids |= self.index.get(word, set())
+
+        #2. Score each candidate section using score_document()
+        for section_id in candidate_ids:
+            filename, text = self.sections[section_id]
             score = self.score_document(query, text)
-            #2. Append the score to the filename in a dict
-            if score > 0:
+            if score > 1: #add guardrail to avoid low quality answers
                 scored_lst.append((score,filename,text))
         #3. Sort the list of tuples by the descending score
         scored_lst.sort(key=lambda item: item[0], reverse=True)
@@ -143,7 +174,7 @@ class DocuBot:
         """
         snippets = self.retrieve(query, top_k=top_k)
 
-        if not snippets:
+        if not snippets: 
             return "I do not know based on these docs."
 
         formatted = []
