@@ -94,14 +94,17 @@ class DocuBot:
         - Count how many appear in the text
         - Return the count as the score
         """
-        #1. Create a count var 
+        #include stop words list to skip insignficant query words
+        stop_words_lst = ["how", "does", "do","the", "a", "which", "where", 'i']
+       
+       #1. Create a count var 
         count = 0
         query_words = query.lower().split()
         text_words = re.findall(r"\w+", text.lower()) #turns into word list and strips punctuation
 
         #2. Count how many query words appear in the text
         for word in query_words:
-            if word in text_words:
+            if word in text_words and word not in stop_words_lst:
                 count += 1
 
         return count
