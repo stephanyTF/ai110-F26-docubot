@@ -120,12 +120,9 @@ class DocuBot:
         - Count how many appear in the text
         - Return the count as the score
         """
-        #include stop words list to skip insignficant query words
-        stop_words_lst = ["is", "the", "and", "can", "at", "an", "what", "how", "does", "do","the", "a", "which", "where", 'i']
        
        #1. Create a count var 
         count = 0
-        query_words = query.lower().split()
         text_words = re.findall(r"\w+", text.lower()) #turns into word list and strips punctuation
 
         #2. Count how many query words appear in the text
@@ -143,6 +140,13 @@ class DocuBot:
         Return a list of (filename, text) sorted by score descending.
         """
         scored_lst = []
+        #include stop words list to skip insignficant query words
+        stop_words_lst = ["is", "the", "and", "can", "at", "an", "what", "how", "does", "do","the", "a", "which", "where", 'i']
+        #tokenize the query the same way as the text, dedupe, drop stop words
+        query_words = set(re.findall(r"\w+", query.lower())) - set(stop_words_lst)
+        
+        #guardrail: require at least half of the meaningful query words to match (minimum 1)
+        needed = max(1, (len(query_words) + 1) // 2)   # at least half the meaningful words, minimum 1
 
         #1. Use the index to find candidate sections containing any query word
         candidate_ids = set()
@@ -152,8 +156,8 @@ class DocuBot:
         #2. Score each candidate section using score_document()
         for section_id in candidate_ids:
             filename, text = self.sections[section_id]
-            score = self.score_document(query, text)
-            if score > 1: #add guardrail to avoid low quality answers
+            score = self.score_document(query_words, text)
+            if score >= needed: #add guardrail to avoid low quality answers
                 scored_lst.append((score,filename,text))
         #3. Sort the list of tuples by the descending score
         scored_lst.sort(key=lambda item: item[0], reverse=True)
