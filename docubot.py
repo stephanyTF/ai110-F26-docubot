@@ -70,7 +70,7 @@ class DocuBot:
             #2. Split the text into words (tokens) and ignore punctuation
             tokens = [t.strip(".,;:!?()[]{}\"'`*#") for t in text.lower().split()]
             tokens = re.findall(f"\w+", text.lower())  # Use regex to extract words only
-            
+
             #3. Loop through each token
             for token in tokens:
                 #4. Add the filename to the index for this token
@@ -94,8 +94,17 @@ class DocuBot:
         - Count how many appear in the text
         - Return the count as the score
         """
-        # TODO: implement scoring
-        return 0
+        #1. Create a count var 
+        count = 0
+        query_words = query.lower().split()
+        text_words = re.findall(r"\w+", text.lower()) #turns into word list and strips punctuation
+
+        #2. Count how many query words appear in the text
+        for word in query_words:
+            if word in text_words:
+                count += 1
+
+        return count
 
     def retrieve(self, query, top_k=3):
         """
