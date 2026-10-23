@@ -9,6 +9,7 @@ Core DocuBot class responsible for:
 
 import os
 import glob
+import re #added for punctuation handling
 
 class DocuBot:
     def __init__(self, docs_folder="docs", llm_client=None):
@@ -64,7 +65,19 @@ class DocuBot:
         ignore punctuation if needed.
         """
         index = {}
-        # TODO: implement simple indexing
+        #1. Loop through each document in documents
+        for filename, text in documents:
+            #2. Split the text into words (tokens) and ignore punctuation
+            tokens = [t.strip(".,;:!?()[]{}\"'`*#") for t in text.lower().split()]
+            tokens = re.findall(f"\w+", text.lower())  # Use regex to extract words only
+            
+            #3. Loop through each token
+            for token in tokens:
+                #4. Add the filename to the index for this token
+                if token not in index:
+                    index[token] = set()  # Use a set to avoid duplicates
+                index[token].add(filename)
+        
         return index
 
     # -----------------------------------------------------------
