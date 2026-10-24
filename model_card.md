@@ -15,16 +15,16 @@ Use clear, honest descriptions. It is fine if your system is imperfect.
 **What is DocuBot trying to do?**  
 Describe the overall goal in 2 to 3 sentences.
 
-> _Your answer here._
+> The DocuBot helps find the right information that best answers the user's questions related to one or more of the four technical files. It's meant to give appropiate answers and avoids giving and answering non relevant information.
 
 **What inputs does DocuBot take?**  
 For example: user question, docs in folder, environment variables.
 
-> _Your answer here._
+> A user question (free-style written form)
 
 **What outputs does DocuBot produce?**
 
-> _Your answer here._
+> For non llm models, it returned a piece of text from one of the files if there was a relevant enough answer. For llm models, it returns a short summary and says what file its answer is based on.
 
 ---
 
