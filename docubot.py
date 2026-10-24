@@ -52,7 +52,7 @@ class DocuBot:
     # Section Splitting
     # -----------------------------------------------------------
 
-    def split_sections(self, filename, text)-> :
+    def split_sections(self, filename, text):
         """
         Splits one document into sections.
         Markdown files split before each heading; any section without
@@ -126,8 +126,8 @@ class DocuBot:
         text_words = re.findall(r"\w+", text.lower()) #turns into word list and strips punctuation
 
         #2. Count how many query words appear in the text
-        for word in query_words:
-            if word in text_words and word not in stop_words_lst:
+        for word in query:
+            if word in text_words:
                 count += 1
 
         return count
