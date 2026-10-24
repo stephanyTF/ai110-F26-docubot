@@ -124,7 +124,7 @@ class DocuBot:
         count = 0
         text_words = re.findall(r"\w+", text.lower()) #turns into word list and strips punctuation
 
-        #2. Count how many query words appear in the text
+        #2. Count if query words appear in the text
         for word in query:
             if word in text_words:
                 count += 1

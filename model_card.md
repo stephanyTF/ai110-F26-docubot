@@ -37,12 +37,14 @@ Describe your choices for indexing and scoring.
 - How do you score relevance for a query?
 - How do you choose top snippets?
 
-> _Your answer here._
+> - Documents are turned into an index by first being split into sections and then each unique word is put into the index with its corresponding filename and section.
+> - Query are scored for relevancy by how many of the query words appear in the text
+> - The top snippest are chosen by highest score and the top_k (default = 3).
 
 **What tradeoffs did you make?**  
 For example: speed vs precision, simplicity vs accuracy.
 
-> _Your answer here._
+>Leaning toward simplicity vs accuracy. Eventhough we narrowed down the sources from files to section and removed common / stop words to avoid adding noise, there's a lack of weighing which words are actually relevant or even if the query shows up in the title as well. This is because due to time. 
 
 ---
 
@@ -55,12 +57,13 @@ Briefly describe how each mode behaves.
 - Retrieval only mode:
 - RAG mode:
 
-> _Your answer here._
+> Naive LLM mode: The LLM answers with no context of the files
+>
 
 **What instructions do you give the LLM to keep it grounded?**  
 Summarize the rules from your prompt. For example: only use snippets, say "I do not know" when needed, cite files.
 
-> _Your answer here._
+> Avoids giving low scoring information and falls back to "not knowing enough information" and always cite files when applicable. 
 
 ---
 
@@ -72,10 +75,10 @@ You can reuse or adapt the queries from `dataset.py`.
 
 | Query | Naive LLM: helpful or harmful? | Retrieval only: helpful or harmful? | RAG: helpful or harmful? | Notes |
 |------|---------------------------------|--------------------------------------|---------------------------|-------|
-| Example: Where is the auth token generated? | | | | |
-| Example: How do I connect to the database? | | | | |
-| Example: Which endpoint lists all users? | | | | |
-| Example: How does a client refresh an access token? | | | | |
+| Example: Where is the auth token generated? |Not helpful (asks more specific questions) | Not helpful | Not helpful | Section provided is not the best associated with the query |
+| Example: How do I connect to the database? | helpful but risky (provides info but not grounded in docs) | helpful| helpful| With llm and retrieval, clear and right info |
+| Example: Which endpoint lists all users? |harmful info provided is different from the API_REFERENCE.md doc| Not helpful | helpful|With llm and retrieval, clear and right info |
+| Example: How does a client refresh an access token? | helpful but risky (provides info but not grounded in docs) | Not helpful | helpful| With llm and retrieval, clear and right info|
 
 **What patterns did you notice?**  
 
@@ -83,8 +86,9 @@ You can reuse or adapt the queries from `dataset.py`.
 - When is retrieval only clearly better?  
 - When is RAG clearly better than both?
 
-> _Your answer here._
-
+> Naive LLM looks impressive when it gives a confident answer but untrustworthy because it's not grounded in the docs.
+> Retrieval is clearly better when the question is straightforward and can be found easily in the files
+> RAG is clearly better when it can answer the query directly using relevant info from the docs.
 ---
 
 ## 5. Failure Cases and Guardrails
@@ -96,19 +100,21 @@ For each one, say:
 - What did the system do?  
 - What should have happened instead?
 
-> _Failure case 1 here._
+> Failure case 1: Where is the auth token generated?
+> The system returns that it doesn't know even though the answer is in the AUTH.md Token Generation section
 
-> _Failure case 2 here._
+> Failure case 2: Which fields are stored in the users table?
+> the system fails to know eventhough the answer is in the DATABASE.md Tables section.
 
 **When should DocuBot say “I do not know based on the docs I have”?**  
 Give at least two specific situations.
 
-> _Your answer here._
+> The DocuBot should admit limited knowledge when the query can't be answered by the docs or the docs relevance score is too low.
 
 **What guardrails did you implement?**  
 Examples: refusal rules, thresholds, limits on snippets, safe defaults.
 
-> _Your answer here._
+> Safe Defaults: “I do not know based on the docs I have” when score relevancy is low
 
 ---
 
@@ -117,16 +123,16 @@ Examples: refusal rules, thresholds, limits on snippets, safe defaults.
 **Current limitations**  
 List at least three limitations of your DocuBot system.
 
-1. _Limitation 1_
-2. _Limitation 2_
-3. _Limitation 3_
+1. Accuracy of responses
+2. Rejecting unrelated questions
+3. Lack following up in case the query could be reworded differently to get the intended answer
 
 **Future improvements**  
 List two or three changes that would most improve reliability or usefulness.
 
-1. _Improvement 1_
-2. _Improvement 2_
-3. _Improvement 3_
+1. Weighing of key words in query to improve accuracy
+2. Have the LLM recognize irrelvant questions and refuse to look thru the docs
+3. Follow up w/ the user in case a legitimate question is turned down.
 
 ---
 
@@ -135,13 +141,13 @@ List two or three changes that would most improve reliability or usefulness.
 **Where could this system cause real world harm if used carelessly?**  
 Think about wrong answers, missing information, or over trusting the LLM.
 
-> _Your answer here._
+> If not grounded in the docs, the LLM could give poor or malicious instructions that could harm the user or their software.
 
 **What instructions would you give real developers who want to use DocuBot safely?**  
 Write 2 to 4 short bullet points.
 
-- _Guideline 1_
-- _Guideline 2_
-- _Guideline 3 (optional)_
+- Always ask clear and specific queries 
+- Refrain from jail breaking unless implementing those safety features
+
 
 ---
